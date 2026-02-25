@@ -4,133 +4,519 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Robot Control</title>
+
+    <!-- Tipografía estilo sci-fi / consola -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Robot Control HUD</title>
 </head>
 
-<body class="bg-gray-950 text-gray-100">
-    <div class="max-w-5xl mx-auto p-6 space-y-6">
-        <header class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold">Robot Arm Dashboard</h1>
-                <p class="text-sm text-gray-400">Estado: <span id="conn" class="text-yellow-300">DESCONOCIDO</span></p>
+<body>
+    <!-- Fondo HUD -->
+    <div class="bg-grid"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <main class="wrap">
+        <!-- Top bar -->
+        <header class="topbar panel panel--glow">
+            <div class="brand">
+                <div class="brand__title glitch" data-text="INTERJUM // ROBOT HUD">INTERJUM // ROBOT HUD</div>
+                <div class="brand__subtitle">Terminal de control • PCA9685 • ESP32 • 6-DOF</div>
             </div>
-            <div class="flex gap-3">
-                <button id="masterArm" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500">ARM ALL</button>
-                <button id="estop" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 font-semibold">STOP</button>
+
+            <div class="topbar__actions">
+                <button id="masterArm" class="btn btn--primary">
+                    <span class="btn__icon">⛭</span>
+                    ARM ALL
+                </button>
+                <button id="estop" class="btn btn--danger">
+                    <span class="btn__icon">⟂</span>
+                    STOP
+                </button>
             </div>
         </header>
 
-        <section class="bg-gray-900/60 rounded-2xl p-4 border border-gray-800">
-            <div class="grid grid-cols-12 gap-3 text-xs text-gray-400 mb-2">
-                <div class="col-span-2">ARM</div>
-                <div class="col-span-3">Motor</div>
-                <div class="col-span-5">Grados</div>
-                <div class="col-span-2 text-right">Valor</div>
+        <!-- HUD hubs -->
+        <section class="hubs">
+            <div class="hub panel">
+                <div class="hub__head">
+                    <div class="hub__title">LINK STATUS</div>
+                    <div class="hub__badge" id="connBadge">
+                        <span class="dot dot--warn" id="connDot"></span>
+                        <span id="connText">DESCONOCIDO</span>
+                    </div>
+                </div>
+                <div class="hub__body">
+                    <div class="kv">
+                        <div class="kv__k">latency</div>
+                        <div class="kv__v"><span id="latency">—</span> ms</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">enable mask</div>
+                        <div class="kv__v mono">0b<span id="maskBin">000000</span> <span class="muted">(</span><span
+                                id="maskDec">0</span><span class="muted">)</span></div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">rate</div>
+                        <div class="kv__v"><span id="rate">0</span> msg/s</div>
+                    </div>
+                </div>
+                <div class="hub__fx ring"></div>
             </div>
-            <div id="motors" class="space-y-3"></div>
+
+            <div class="hub panel">
+                <div class="hub__head">
+                    <div class="hub__title">ROBOT STATE</div>
+                    <div class="hub__badge">
+                        <span class="pill">servo6 clamp: <b>15–90°</b></span>
+                    </div>
+                </div>
+                <div class="hub__body">
+                    <div class="kv">
+                        <div class="kv__k">last cmd</div>
+                        <div class="kv__v mono ellipsis" id="lastCmd">—</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">last rx</div>
+                        <div class="kv__v mono ellipsis" id="lastRx">—</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">uptime</div>
+                        <div class="kv__v"><span id="uptime">—</span></div>
+                    </div>
+                </div>
+                <div class="hub__fx ring ring--alt"></div>
+            </div>
+
+            <div class="hub panel">
+                <div class="hub__head">
+                    <div class="hub__title">HOTKEYS</div>
+                    <div class="hub__badge">
+                        <span class="pill">Q: ARM ALL</span>
+                        <span class="pill">ESC: STOP</span>
+                    </div>
+                </div>
+                <div class="hub__body">
+                    <div class="kv">
+                        <div class="kv__k">tip</div>
+                        <div class="kv__v">Arma solo lo que uses. Desarmado = SAFE.</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">safe boot</div>
+                        <div class="kv__v">Al cargar: todos desarmados ✅</div>
+                    </div>
+                    <div class="kv">
+                        <div class="kv__k">mode</div>
+                        <div class="kv__v"><span id="mode">SIM</span> <span class="muted">(WS listo para
+                                conectar)</span></div>
+                    </div>
+                </div>
+                <div class="hub__fx ring ring--small"></div>
+            </div>
         </section>
-    </div>
+
+        <!-- Main grid -->
+        <section class="grid">
+            <!-- Motor control -->
+            <section class="panel panel--glow">
+                <div class="panel__head">
+                    <div class="panel__title">MOTOR CONTROL</div>
+                    <div class="panel__meta">
+                        <span class="chip">CH0..CH5</span>
+                        <span class="chip">MG996 + SG90</span>
+                    </div>
+                </div>
+
+                <div class="motorHead">
+                    <div class="mh mh--arm">ARM</div>
+                    <div class="mh mh--name">MOTOR</div>
+                    <div class="mh mh--deg">DEGREES</div>
+                    <div class="mh mh--val">VAL</div>
+                </div>
+
+                <div id="motors" class="motors"></div>
+
+                <div class="panel__foot">
+                    <div class="hint mono">
+                        <span class="muted">Nota:</span> Desarmado bloquea UI y también el firmware debe ignorarlo.
+                        (doble cinturón).
+                    </div>
+                </div>
+            </section>
+
+            <!-- Console / telemetry -->
+            <section class="panel">
+                <div class="panel__head">
+                    <div class="panel__title">TELEMETRY + CONSOLE</div>
+                    <div class="panel__meta">
+                        <span class="chip chip--pulse" id="simPulse">SIM FEED</span>
+                        <span class="chip">JSON</span>
+                    </div>
+                </div>
+
+                <div class="telemetry">
+                    <div class="telemetry__card">
+                        <div class="tlabel">RSSI</div>
+                        <div class="tvalue" id="rssi">—</div>
+                    </div>
+                    <div class="telemetry__card">
+                        <div class="tlabel">CPU</div>
+                        <div class="tvalue" id="cpu">—</div>
+                    </div>
+                    <div class="telemetry__card">
+                        <div class="tlabel">I2C</div>
+                        <div class="tvalue" id="i2c">OK</div>
+                    </div>
+                    <div class="telemetry__card">
+                        <div class="tlabel">SERVO BUS</div>
+                        <div class="tvalue" id="bus">50Hz</div>
+                    </div>
+                </div>
+
+                <div class="console">
+                    <div class="console__head">
+                        <div class="console__title mono">LOG</div>
+                        <div class="console__actions">
+                            <button id="clearLog" class="btn btn--ghost">CLEAR</button>
+                            <button id="toggleSim" class="btn btn--ghost">TOGGLE SIM</button>
+                        </div>
+                    </div>
+                    <div id="log" class="console__body mono"></div>
+                </div>
+
+                <div class="panel__foot">
+                    <div class="hint">
+                        Listo para WebSocket: cambia <span class="mono">send()</span> para mandar a tu relay.
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
 
     <script>
-        // Config base
+        // =========================
+        //   CORE CONFIG / STATE
+        // =========================
         const motors = [
             { ch: 0, name: "Base (MG996)", min: 0, max: 180, deg: 90, armed: false },
             { ch: 1, name: "Antebrazo (MG996)", min: 0, max: 180, deg: 90, armed: false },
             { ch: 2, name: "Brazo (MG996)", min: 0, max: 180, deg: 90, armed: false },
-            { ch: 3, name: "Muñeca tilt (SG90)", min: 0, max: 180, deg: 90, armed: false },
+            { ch: 3, name: "Muñeca inclinación (SG90)", min: 0, max: 180, deg: 90, armed: false },
             { ch: 4, name: "Giro garra (SG90)", min: 0, max: 180, deg: 90, armed: false },
             { ch: 5, name: "Apertura garra (SG90)", min: 15, max: 90, deg: 45, armed: false }, // clamp especial
         ];
 
-        const elMotors = document.getElementById("motors");
+        const $ = (id) => document.getElementById(id);
+        const elMotors = $("motors");
+        const elLog = $("log");
+
         const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        const bin6 = (n) => n.toString(2).padStart(6, "0");
 
         function enableMask() {
             return motors.reduce((mask, m) => mask | ((m.armed ? 1 : 0) << m.ch), 0);
         }
 
-        // En el siguiente paso esto se vuelve WS send()
-        function send(msg) {
-            console.log("SEND", msg);
+        function setConn(state) {
+            const dot = $("connDot");
+            const txt = $("connText");
+            const badge = $("connBadge");
+
+            badge.classList.remove("ok", "warn", "bad");
+            dot.classList.remove("dot--ok", "dot--warn", "dot--bad");
+
+            if (state === "OK") {
+                badge.classList.add("ok");
+                dot.classList.add("dot--ok");
+                txt.textContent = "CONNECTED";
+            } else if (state === "BAD") {
+                badge.classList.add("bad");
+                dot.classList.add("dot--bad");
+                txt.textContent = "DISCONNECTED";
+            } else {
+                badge.classList.add("warn");
+                dot.classList.add("dot--warn");
+                txt.textContent = "UNKNOWN";
+            }
         }
 
-        function render() {
+        // =========================
+        //   HUD HELPERS
+        // =========================
+        let msgCount = 0;
+        let lastRateTick = Date.now();
+        function bumpRate() {
+            msgCount++;
+        }
+        setInterval(() => {
+            const now = Date.now();
+            const dt = Math.max(1, (now - lastRateTick) / 1000);
+            $("rate").textContent = Math.round(msgCount / dt);
+            msgCount = 0;
+            lastRateTick = now;
+        }, 1000);
+
+        function logLine(type, obj) {
+            const t = new Date().toLocaleTimeString();
+            const line = document.createElement("div");
+            line.className = "logline " + (type === "TX" ? "tx" : type === "RX" ? "rx" : "sys");
+            line.innerHTML = `<span class="tag">${type}</span><span class="time">${t}</span> ${escapeHtml(JSON.stringify(obj))}`;
+            elLog.prepend(line);
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
+        }
+
+        function updateMaskUI() {
+            const mask = enableMask();
+            $("maskBin").textContent = bin6(mask);
+            $("maskDec").textContent = mask;
+        }
+
+        function updateUptime(ms) {
+            if (typeof ms !== "number") { $("uptime").textContent = "—"; return; }
+            const s = Math.floor(ms / 1000);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const ss = s % 60;
+            $("uptime").textContent = `${h}h ${m}m ${ss}s`;
+        }
+
+        // =========================
+        //   WS READY LAYER (SIM NOW)
+        // =========================
+        // En producción: reemplaza send() para WS.
+        // Ejemplo:
+        // ws.send(JSON.stringify(msg))
+        // y en ws.onmessage => handleRx(JSON.parse(evt.data))
+        function send(msg) {
+            // UI side safety: si set_servo y no armado, no manda
+            if (msg.type === "set_servo") {
+                const m = motors[msg.ch];
+                if (!m?.armed) return;
+            }
+            // UI clamp extra (por si alguien mete valores raros)
+            if (msg.type === "set_servo") {
+                const m = motors[msg.ch];
+                msg.deg = clamp(+msg.deg, m.min, m.max);
+            }
+            if (msg.type === "set_pose" && Array.isArray(msg.deg)) {
+                msg.deg = msg.deg.map((d, ch) => {
+                    const m = motors[ch];
+                    return clamp(+d, m.min, m.max);
+                });
+            }
+
+            $("lastCmd").textContent = JSON.stringify(msg);
+            bumpRate();
+            logLine("TX", msg);
+
+            // SIM feed (solo para ver movimiento/telemetría bonita)
+            if (simEnabled) {
+                simulateRxFor(msg);
+            }
+        }
+
+        function handleRx(msg) {
+            $("lastRx").textContent = JSON.stringify(msg);
+            bumpRate();
+            logLine("RX", msg);
+
+            if (msg.type === "status") {
+                if (typeof msg.enable_mask === "number") {
+                    // sincronizar armado con máscara
+                    motors.forEach(m => m.armed = ((msg.enable_mask >> m.ch) & 1) === 1);
+                    updateMaskUI();
+                    renderMotors();
+                }
+                if (Array.isArray(msg.deg) && msg.deg.length === 6) {
+                    msg.deg.forEach((d, ch) => {
+                        motors[ch].deg = clamp(+d, motors[ch].min, motors[ch].max);
+                    });
+                    renderMotors();
+                }
+                if (typeof msg.rssi === "number") $("rssi").textContent = msg.rssi + " dBm";
+                if (typeof msg.uptime_ms === "number") updateUptime(msg.uptime_ms);
+            }
+        }
+
+        // =========================
+        //   UI RENDER
+        // =========================
+        function renderMotors() {
             elMotors.innerHTML = "";
+
             motors.forEach((m, idx) => {
                 const row = document.createElement("div");
-                row.className = "grid grid-cols-12 gap-3 items-center";
+                row.className = "motorRow";
+
+                const armedClass = m.armed ? "armed" : "safe";
 
                 row.innerHTML = `
-        <div class="col-span-2">
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" ${m.armed ? "checked" : ""} data-idx="${idx}" class="armToggle h-4 w-4">
-            <span class="${m.armed ? "text-green-300" : "text-gray-400"}">${m.armed ? "ARMED" : "SAFE"}</span>
+        <div class="col col--arm">
+          <label class="toggle ${armedClass}">
+            <input type="checkbox" ${m.armed ? "checked" : ""} data-idx="${idx}" class="armToggle" />
+            <span class="toggle__track">
+              <span class="toggle__thumb"></span>
+            </span>
+            <span class="toggle__text">${m.armed ? "ARMED" : "SAFE"}</span>
           </label>
         </div>
 
-        <div class="col-span-3 text-sm">${m.name}</div>
-
-        <div class="col-span-5">
-          <input type="range" min="${m.min}" max="${m.max}" value="${m.deg}"
-            data-idx="${idx}"
-            class="degSlider w-full ${m.armed ? "" : "opacity-40 pointer-events-none"}" />
-          <div class="text-xs text-gray-500 mt-1">min ${m.min}° / max ${m.max}°</div>
+        <div class="col col--name">
+          <div class="mname">${m.name}</div>
+          <div class="mmeta mono">CH${m.ch} • min ${m.min}° • max ${m.max}°</div>
         </div>
 
-        <div class="col-span-2 text-right">
-          <input type="number" min="${m.min}" max="${m.max}" value="${m.deg}"
-            data-idx="${idx}"
-            class="degInput w-20 bg-gray-950 border border-gray-800 rounded-lg px-2 py-1 text-sm ${m.armed ? "" : "opacity-40 pointer-events-none"}" />
+        <div class="col col--deg">
+          <div class="sliderWrap ${m.armed ? "" : "disabled"}">
+            <input type="range" min="${m.min}" max="${m.max}" value="${m.deg}" data-idx="${idx}" class="degSlider" />
+            <div class="sliderGlow"></div>
+          </div>
+        </div>
+
+        <div class="col col--val">
+          <input type="number" min="${m.min}" max="${m.max}" value="${m.deg}" data-idx="${idx}"
+            class="degInput mono ${m.armed ? "" : "disabled"}" />
+          <button class="btn btn--micro btn--ghost centerBtn" data-idx="${idx}">90°</button>
         </div>
       `;
+
                 elMotors.appendChild(row);
             });
 
-            // listeners
+            // listeners: ARM
             document.querySelectorAll(".armToggle").forEach(inp => {
                 inp.onchange = (e) => {
                     const idx = +e.target.dataset.idx;
                     motors[idx].armed = e.target.checked;
-
-                    // Cuando cambie el mask, lo mandamos
+                    updateMaskUI();
                     send({ type: "set_enable_mask", mask: enableMask() });
-                    render();
+                    renderMotors();
                 };
             });
 
+            // slider + input
             const onDegChange = (idx, value) => {
                 const m = motors[idx];
                 const v = clamp(+value, m.min, m.max);
                 m.deg = v;
-
-                // Solo manda si está armado
+                renderMotors();
                 if (m.armed) {
                     send({ type: "set_servo", ch: m.ch, deg: v });
                 }
-                render();
             };
 
             document.querySelectorAll(".degSlider").forEach(inp => {
                 inp.oninput = (e) => onDegChange(+e.target.dataset.idx, e.target.value);
             });
+
             document.querySelectorAll(".degInput").forEach(inp => {
                 inp.onchange = (e) => onDegChange(+e.target.dataset.idx, e.target.value);
             });
+
+            document.querySelectorAll(".centerBtn").forEach(btn => {
+                btn.onclick = (e) => {
+                    const idx = +e.target.dataset.idx;
+                    onDegChange(idx, 90);
+                };
+            });
         }
 
-        document.getElementById("masterArm").onclick = () => {
+        // =========================
+        //   BUTTONS / HOTKEYS
+        // =========================
+        $("masterArm").onclick = () => {
             const anyDisarmed = motors.some(m => !m.armed);
-            motors.forEach(m => m.armed = anyDisarmed); // si hay alguno apagado → enciende todos, si no → apaga todos
+            motors.forEach(m => m.armed = anyDisarmed);
+            updateMaskUI();
             send({ type: "set_enable_mask", mask: enableMask() });
-            render();
+            renderMotors();
         };
 
-        document.getElementById("estop").onclick = () => {
+        $("estop").onclick = () => {
             send({ type: "estop" });
         };
 
-        render();
+        $("clearLog").onclick = () => {
+            elLog.innerHTML = "";
+            logLine("SYS", { info: "log cleared" });
+        };
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key.toLowerCase() === "q") {
+                $("masterArm").click();
+            }
+            if (e.key === "Escape") {
+                $("estop").click();
+            }
+        });
+
+        // =========================
+        //   SIMULACIÓN (para que se vea vivo)
+        // =========================
+        let simEnabled = true;
+        $("toggleSim").onclick = () => {
+            simEnabled = !simEnabled;
+            $("mode").textContent = simEnabled ? "SIM" : "WS";
+            $("simPulse").style.display = simEnabled ? "inline-flex" : "none";
+            logLine("SYS", { sim: simEnabled });
+            if (simEnabled) {
+                setConn("OK");
+            }
+        };
+
+        function simulateRxFor(tx) {
+            // “telemetría” fake
+            const rssi = -50 - Math.floor(Math.random() * 25);
+            const cpu = 20 + Math.floor(Math.random() * 50);
+            $("cpu").textContent = cpu + "%";
+            $("latency").textContent = 10 + Math.floor(Math.random() * 35);
+
+            let enable_mask = enableMask();
+            let deg = motors.map(m => m.deg);
+
+            // Si llega set_enable_mask, lo reflejamos
+            if (tx.type === "set_enable_mask") {
+                enable_mask = tx.mask;
+            }
+
+            // Si llega estop, no cambiamos valores, solo avisamos
+            if (tx.type === "estop") {
+                handleRx({ type: "status", enable_mask, deg, rssi, uptime_ms: performance.now() | 0 });
+                return;
+            }
+
+            // status normal
+            handleRx({ type: "status", enable_mask, deg, rssi, uptime_ms: performance.now() | 0 });
+        }
+
+        // =========================
+        //   INIT
+        // =========================
+        function init() {
+            setConn("OK");               // en WS real, esto depende del socket
+            $("latency").textContent = "—";
+            $("rssi").textContent = "—";
+            $("cpu").textContent = "—";
+            updateMaskUI();
+            renderMotors();
+
+            logLine("SYS", { boot: "ok", note: "All motors start SAFE (disarmed)." });
+            // Primer status “ping”
+            send({ type: "get_status" });
+        }
+
+        init();
     </script>
 </body>
 
