@@ -1,0 +1,94 @@
+# =========================
+# OS / Editor junk
+# =========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+*.swp
+*.swo
+*.tmp
+*.temp
+*.bak
+*.log
+
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# Env / secrets (NO subir)
+# =========================
+.env
+.env.*
+secrets.*
+*secrets*
+wifi_credentials.*
+credentials.*
+*.pem
+*.key
+
+# =========================
+# Node (si usas relay / build tools)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+.parcel-cache/
+.next/
+out/
+
+# =========================
+# PlatformIO
+# =========================
+.pio/
+.pioenvs/
+.piolibdeps/
+.piotest/
+
+# =========================
+# Arduino / ESP32 build artifacts
+# =========================
+*.elf
+*.bin
+*.hex
+*.map
+*.o
+*.a
+*.d
+*.gcda
+*.gcno
+*.gcov
+
+# Arduino IDE / CLI build folders
+build/
+build-*/
+.prefs
+.sketch
+*.ino.*
+*.cpp.*
+*.h.*
+
+# =========================
+# Python (si haces tooling)
+# =========================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ENV/
+.envrc
+
+# =========================
+# Optional: local deploy scripts / temp exports
+# =========================
+deploy.local.sh
+*.zip
+*.tar
+*.gz
