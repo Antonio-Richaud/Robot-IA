@@ -1,0 +1,874 @@
+:root {
+    --bg: #05070c;
+    --panel: rgba(10, 16, 28, 0.68);
+    --panel2: rgba(10, 16, 28, 0.85);
+    --stroke: rgba(140, 255, 255, 0.12);
+    --stroke2: rgba(140, 255, 255, 0.22);
+
+    --text: rgba(235, 250, 255, 0.92);
+    --muted: rgba(190, 220, 240, 0.55);
+
+    --cyan: #43fff6;
+    --aqua: #2df6ff;
+    --lime: #6aff6a;
+    --amber: #ffd36a;
+    --red: #ff3b5c;
+    --violet: #8a67ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: radial-gradient(1200px 800px at 70% 0%, rgba(67, 255, 246, 0.10), transparent 60%),
+        radial-gradient(900px 700px at 0% 70%, rgba(138, 103, 255, 0.10), transparent 60%),
+        var(--bg);
+    color: var(--text);
+    font-family: "Orbitron", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+/* ===== HUD BACKGROUND ===== */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background:
+        linear-gradient(to right, rgba(67, 255, 246, 0.07) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(67, 255, 246, 0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.25;
+    transform: translateZ(0);
+    animation: gridShift 12s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes gridShift {
+    0% {
+        transform: translate3d(0, 0, 0);
+        filter: hue-rotate(0deg);
+    }
+
+    100% {
+        transform: translate3d(-48px, 48px, 0);
+        filter: hue-rotate(14deg);
+    }
+}
+
+.scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.04) 0px,
+            rgba(255, 255, 255, 0.02) 1px,
+            rgba(0, 0, 0, 0.00) 3px,
+            rgba(0, 0, 0, 0.00) 6px);
+    opacity: 0.12;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    animation: scan 6s linear infinite;
+}
+
+@keyframes scan {
+    0% {
+        transform: translateY(-20px);
+    }
+
+    100% {
+        transform: translateY(20px);
+    }
+}
+
+.vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 45%, transparent 35%, rgba(0, 0, 0, 0.6) 75%);
+    pointer-events: none;
+}
+
+/* ===== LAYOUT ===== */
+.wrap {
+    width: min(1280px, calc(100% - 32px));
+    margin: 22px auto 34px;
+    display: grid;
+    gap: 16px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 16px;
+}
+
+.brand__title {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 20px;
+    line-height: 1.1;
+}
+
+.brand__subtitle {
+    margin-top: 6px;
+    font-family: "Share Tech Mono", monospace;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* Glitch effect */
+.glitch {
+    position: relative;
+    text-shadow: 0 0 18px rgba(67, 255, 246, 0.18);
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.glitch::before {
+    transform: translate(1px, 0);
+    color: rgba(67, 255, 246, 0.85);
+    clip-path: inset(0 0 50% 0);
+    animation: glitch1 2.2s infinite linear alternate;
+}
+
+.glitch::after {
+    transform: translate(-1px, 0);
+    color: rgba(255, 59, 92, 0.60);
+    clip-path: inset(50% 0 0 0);
+    animation: glitch2 2.7s infinite linear alternate;
+}
+
+@keyframes glitch1 {
+    0% {
+        clip-path: inset(0 0 58% 0);
+    }
+
+    40% {
+        clip-path: inset(0 0 44% 0);
+    }
+
+    80% {
+        clip-path: inset(0 0 66% 0);
+    }
+
+    100% {
+        clip-path: inset(0 0 52% 0);
+    }
+}
+
+@keyframes glitch2 {
+    0% {
+        clip-path: inset(54% 0 0 0);
+    }
+
+    50% {
+        clip-path: inset(62% 0 0 0);
+    }
+
+    100% {
+        clip-path: inset(48% 0 0 0);
+    }
+}
+
+/* ===== PANELS ===== */
+.panel {
+    position: relative;
+    background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    box-shadow: 0 0 0 1px rgba(67, 255, 246, 0.05) inset,
+        0 14px 50px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.panel::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: conic-gradient(from 180deg,
+            rgba(67, 255, 246, 0.0),
+            rgba(67, 255, 246, 0.18),
+            rgba(138, 103, 255, 0.10),
+            rgba(255, 59, 92, 0.08),
+            rgba(67, 255, 246, 0.0));
+    opacity: 0.30;
+    filter: blur(18px);
+    z-index: 0;
+    animation: aura 8s linear infinite;
+}
+
+@keyframes aura {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.panel>* {
+    position: relative;
+    z-index: 1;
+}
+
+.panel--glow {
+    border-color: var(--stroke2);
+}
+
+.panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid rgba(140, 255, 255, 0.10);
+}
+
+.panel__title {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    opacity: 0.95;
+}
+
+.panel__meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.panel__foot {
+    padding: 10px 14px 14px;
+    border-top: 1px solid rgba(140, 255, 255, 0.10);
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.mono {
+    font-family: "Share Tech Mono", monospace;
+}
+
+/* ===== HUBS ===== */
+.hubs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.hub {
+    padding: 14px;
+    min-height: 138px;
+}
+
+.hub__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.hub__title {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: rgba(235, 250, 255, 0.9);
+}
+
+.hub__badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border: 1px solid rgba(140, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.25);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 12px;
+}
+
+.hub__badge.ok {
+    border-color: rgba(106, 255, 106, 0.28);
+}
+
+.hub__badge.warn {
+    border-color: rgba(255, 211, 106, 0.28);
+}
+
+.hub__badge.bad {
+    border-color: rgba(255, 59, 92, 0.28);
+}
+
+.kv {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(140, 255, 255, 0.10);
+}
+
+.kv:last-child {
+    border-bottom: none;
+}
+
+.kv__k {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+}
+
+.kv__v {
+    font-size: 13px;
+    text-align: right;
+}
+
+.ellipsis {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(140, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 11px;
+    color: rgba(235, 250, 255, 0.88);
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    box-shadow: 0 0 18px rgba(67, 255, 246, 0.20);
+}
+
+.dot--ok {
+    background: var(--lime);
+    box-shadow: 0 0 16px rgba(106, 255, 106, 0.55);
+}
+
+.dot--warn {
+    background: var(--amber);
+    box-shadow: 0 0 16px rgba(255, 211, 106, 0.55);
+}
+
+.dot--bad {
+    background: var(--red);
+    box-shadow: 0 0 16px rgba(255, 59, 92, 0.55);
+}
+
+.ring {
+    position: absolute;
+    right: -36px;
+    bottom: -36px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 1px solid rgba(67, 255, 246, 0.18);
+    box-shadow: 0 0 30px rgba(67, 255, 246, 0.12);
+    background:
+        radial-gradient(circle at 50% 50%, rgba(67, 255, 246, 0.06), transparent 60%),
+        conic-gradient(from 0deg,
+            rgba(67, 255, 246, 0.0),
+            rgba(67, 255, 246, 0.22),
+            rgba(138, 103, 255, 0.12),
+            rgba(67, 255, 246, 0.0));
+    animation: spin 8s linear infinite;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.ring--alt {
+    border-color: rgba(138, 103, 255, 0.18);
+    box-shadow: 0 0 30px rgba(138, 103, 255, 0.10);
+    animation-duration: 10s;
+}
+
+.ring--small {
+    width: 110px;
+    height: 110px;
+    right: -28px;
+    bottom: -28px;
+    animation-duration: 12s;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(140, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.22);
+    color: rgba(235, 250, 255, 0.92);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(67, 255, 246, 0.34);
+    box-shadow: 0 0 22px rgba(67, 255, 246, 0.18);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn__icon {
+    font-family: "Share Tech Mono", monospace;
+    opacity: 0.9;
+}
+
+.btn--primary {
+    background: linear-gradient(180deg, rgba(67, 255, 246, 0.14), rgba(0, 0, 0, 0.20));
+    border-color: rgba(67, 255, 246, 0.26);
+}
+
+.btn--danger {
+    background: linear-gradient(180deg, rgba(255, 59, 92, 0.20), rgba(0, 0, 0, 0.20));
+    border-color: rgba(255, 59, 92, 0.34);
+    box-shadow: 0 0 18px rgba(255, 59, 92, 0.14);
+}
+
+.btn--danger:hover {
+    border-color: rgba(255, 59, 92, 0.55);
+    box-shadow: 0 0 30px rgba(255, 59, 92, 0.22);
+}
+
+.btn--ghost {
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.btn--micro {
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ===== MOTOR TABLE ===== */
+.motorHead {
+    display: grid;
+    grid-template-columns: 180px 1.1fr 1.2fr 220px;
+    gap: 10px;
+    padding: 10px 14px 8px;
+    color: rgba(190, 220, 240, 0.65);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    border-bottom: 1px dashed rgba(140, 255, 255, 0.14);
+}
+
+.mh--val {
+    text-align: right;
+}
+
+.motors {
+    padding: 10px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.motorRow {
+    display: grid;
+    grid-template-columns: 180px 1.1fr 1.2fr 220px;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 12px;
+    border: 1px solid rgba(140, 255, 255, 0.12);
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.22);
+    box-shadow: 0 0 0 1px rgba(67, 255, 246, 0.04) inset;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.motorRow:hover {
+    border-color: rgba(67, 255, 246, 0.22);
+    box-shadow: 0 0 24px rgba(67, 255, 246, 0.10);
+}
+
+.mname {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+}
+
+.mmeta {
+    margin-top: 5px;
+    font-size: 12px;
+    color: rgba(190, 220, 240, 0.55);
+}
+
+.col--val {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* ===== TOGGLE (ARM/SAFE) ===== */
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+}
+
+.toggle input {
+    display: none;
+}
+
+.toggle__track {
+    width: 54px;
+    height: 26px;
+    border-radius: 999px;
+    border: 1px solid rgba(140, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.30);
+    position: relative;
+    box-shadow: 0 0 16px rgba(67, 255, 246, 0.08) inset;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.toggle__thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 211, 106, 0.9);
+    box-shadow: 0 0 18px rgba(255, 211, 106, 0.35);
+    transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.toggle__text {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 12px;
+    color: rgba(190, 220, 240, 0.75);
+    letter-spacing: 0.08em;
+}
+
+.toggle.armed .toggle__track {
+    border-color: rgba(106, 255, 106, 0.30);
+    box-shadow: 0 0 18px rgba(106, 255, 106, 0.16) inset;
+}
+
+.toggle.armed .toggle__thumb {
+    transform: translate(28px, -50%);
+    background: rgba(106, 255, 106, 0.95);
+    box-shadow: 0 0 18px rgba(106, 255, 106, 0.40);
+}
+
+.toggle.safe .toggle__track {
+    border-color: rgba(255, 211, 106, 0.24);
+}
+
+.toggle.safe .toggle__thumb {
+    background: rgba(255, 211, 106, 0.92);
+    box-shadow: 0 0 18px rgba(255, 211, 106, 0.32);
+}
+
+/* ===== SLIDER ===== */
+.sliderWrap {
+    position: relative;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(140, 255, 255, 0.10);
+    background: rgba(0, 0, 0, 0.20);
+    overflow: hidden;
+}
+
+.sliderGlow {
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle at 30% 40%, rgba(67, 255, 246, 0.20), transparent 40%),
+        radial-gradient(circle at 70% 60%, rgba(138, 103, 255, 0.16), transparent 45%);
+    filter: blur(14px);
+    opacity: 0.7;
+    animation: glowDrift 5.5s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes glowDrift {
+    0% {
+        transform: translate(-2%, -2%);
+    }
+
+    100% {
+        transform: translate(2%, 2%);
+    }
+}
+
+input[type="range"] {
+    width: 100%;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(67, 255, 246, 0.55), rgba(138, 103, 255, 0.45));
+    outline: none;
+    box-shadow: 0 0 18px rgba(67, 255, 246, 0.10);
+    position: relative;
+    z-index: 1;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(235, 250, 255, 0.95);
+    border: 1px solid rgba(67, 255, 246, 0.55);
+    box-shadow: 0 0 22px rgba(67, 255, 246, 0.22);
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(235, 250, 255, 0.95);
+    border: 1px solid rgba(67, 255, 246, 0.55);
+    box-shadow: 0 0 22px rgba(67, 255, 246, 0.22);
+    cursor: pointer;
+}
+
+.degInput {
+    width: 92px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(140, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text);
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.degInput:focus {
+    border-color: rgba(67, 255, 246, 0.38);
+    box-shadow: 0 0 22px rgba(67, 255, 246, 0.14);
+}
+
+.disabled {
+    opacity: 0.40;
+    pointer-events: none;
+    filter: saturate(0.8);
+}
+
+/* ===== TELEMETRY ===== */
+.telemetry {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.telemetry__card {
+    padding: 12px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(140, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.tlabel {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: rgba(190, 220, 240, 0.65);
+}
+
+.tvalue {
+    margin-top: 8px;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 16px;
+    color: rgba(235, 250, 255, 0.92);
+}
+
+/* ===== CONSOLE ===== */
+.console {
+    padding: 0 14px 14px;
+}
+
+.console__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px dashed rgba(140, 255, 255, 0.14);
+    border-bottom: 1px solid rgba(140, 255, 255, 0.10);
+}
+
+.console__title {
+    letter-spacing: 0.18em;
+    font-size: 12px;
+}
+
+.console__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.console__body {
+    margin-top: 10px;
+    height: 300px;
+    overflow: auto;
+    padding-right: 6px;
+}
+
+.console__body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.console__body::-webkit-scrollbar-thumb {
+    background: rgba(67, 255, 246, 0.18);
+    border-radius: 999px;
+    border: 1px solid rgba(140, 255, 255, 0.10);
+}
+
+.logline {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(140, 255, 255, 0.10);
+    background: rgba(0, 0, 0, 0.25);
+    line-height: 1.25;
+    font-size: 12px;
+}
+
+.logline .tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    margin-right: 8px;
+    border: 1px solid rgba(140, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.logline .time {
+    color: rgba(190, 220, 240, 0.65);
+    margin-right: 10px;
+}
+
+.logline.tx {
+    border-color: rgba(67, 255, 246, 0.18);
+    box-shadow: 0 0 16px rgba(67, 255, 246, 0.06);
+}
+
+.logline.rx {
+    border-color: rgba(106, 255, 106, 0.18);
+    box-shadow: 0 0 16px rgba(106, 255, 106, 0.06);
+}
+
+.logline.sys {
+    border-color: rgba(255, 211, 106, 0.18);
+    box-shadow: 0 0 16px rgba(255, 211, 106, 0.06);
+}
+
+/* ===== CHIPS ===== */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(140, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 12px;
+    color: rgba(235, 250, 255, 0.80);
+}
+
+.chip--pulse {
+    border-color: rgba(67, 255, 246, 0.28);
+    box-shadow: 0 0 22px rgba(67, 255, 246, 0.10);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateY(-1px);
+        opacity: 0.75;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 980px) {
+    .hubs {
+        grid-template-columns: 1fr;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .motorHead,
+    .motorRow {
+        grid-template-columns: 1fr;
+    }
+
+    .mh {
+        display: none;
+    }
+
+    .col--val {
+        justify-content: flex-start;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
