@@ -5,202 +5,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Tipografía estilo sci-fi / consola -->
+    <!-- Tipos limpios -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
         rel="stylesheet">
 
     <link rel="stylesheet" href="./styles.css" />
-    <title>Robot Control HUD</title>
+    <title>Robot V1</title>
 </head>
 
 <body>
-    <!-- Fondo HUD -->
-    <div class="bg-grid"></div>
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
-
     <main class="wrap">
         <!-- Top bar -->
-        <header class="topbar panel panel--glow">
-            <div class="brand">
-                <div class="brand__title glitch" data-text="INTERJUM // ROBOT HUD">INTERJUM // ROBOT HUD</div>
-                <div class="brand__subtitle">Terminal de control • PCA9685 • ESP32 • 6-DOF</div>
+        <header class="top">
+            <div class="titleBlock">
+                <div class="title">Robot V1</div>
+                <div class="status" id="connBadge">
+                    <span class="dot dot--warn" id="connDot"></span>
+                    <span id="connText">DISCONNECTED</span>
+                </div>
             </div>
 
-            <div class="topbar__actions">
-                <button id="masterArm" class="btn btn--primary">
-                    <span class="btn__icon">⛭</span>
-                    ARM ALL
-                </button>
-                <button id="estop" class="btn btn--danger">
-                    <span class="btn__icon">⟂</span>
-                    STOP
-                </button>
+            <div class="actions">
+                <button id="masterArm" class="btn btn--primary">ARM ALL</button>
+                <button id="estop" class="btn btn--danger">STOP</button>
             </div>
         </header>
 
-        <!-- HUD hubs -->
-        <section class="hubs">
-            <div class="hub panel">
-                <div class="hub__head">
-                    <div class="hub__title">LINK STATUS</div>
-                    <div class="hub__badge" id="connBadge">
-                        <span class="dot dot--warn" id="connDot"></span>
-                        <span id="connText">DESCONOCIDO</span>
-                    </div>
-                </div>
-                <div class="hub__body">
-                    <div class="kv">
-                        <div class="kv__k">latency</div>
-                        <div class="kv__v"><span id="latency">—</span> ms</div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">enable mask</div>
-                        <div class="kv__v mono">0b<span id="maskBin">000000</span> <span class="muted">(</span><span
-                                id="maskDec">0</span><span class="muted">)</span></div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">rate</div>
-                        <div class="kv__v"><span id="rate">0</span> msg/s</div>
-                    </div>
-                </div>
-                <div class="hub__fx ring"></div>
-            </div>
-
-            <div class="hub panel">
-                <div class="hub__head">
-                    <div class="hub__title">ROBOT STATE</div>
-                    <div class="hub__badge">
-                        <span class="pill">servo6 clamp: <b>15–90°</b></span>
-                    </div>
-                </div>
-                <div class="hub__body">
-                    <div class="kv">
-                        <div class="kv__k">last cmd</div>
-                        <div class="kv__v mono ellipsis" id="lastCmd">—</div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">last rx</div>
-                        <div class="kv__v mono ellipsis" id="lastRx">—</div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">uptime</div>
-                        <div class="kv__v"><span id="uptime">—</span></div>
-                    </div>
-                </div>
-                <div class="hub__fx ring ring--alt"></div>
-            </div>
-
-            <div class="hub panel">
-                <div class="hub__head">
-                    <div class="hub__title">HOTKEYS</div>
-                    <div class="hub__badge">
-                        <span class="pill">Q: ARM ALL</span>
-                        <span class="pill">ESC: STOP</span>
-                    </div>
-                </div>
-                <div class="hub__body">
-                    <div class="kv">
-                        <div class="kv__k">tip</div>
-                        <div class="kv__v">Arma solo lo que uses. Desarmado = SAFE.</div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">safe boot</div>
-                        <div class="kv__v">Al cargar: todos desarmados ✅</div>
-                    </div>
-                    <div class="kv">
-                        <div class="kv__k">mode</div>
-                        <div class="kv__v"><span id="mode">SIM</span> <span class="muted">(WS listo para
-                                conectar)</span></div>
-                    </div>
-                </div>
-                <div class="hub__fx ring ring--small"></div>
-            </div>
-        </section>
-
-        <!-- Main grid -->
-        <section class="grid">
-            <!-- Motor control -->
-            <section class="panel panel--glow">
-                <div class="panel__head">
-                    <div class="panel__title">MOTOR CONTROL</div>
-                    <div class="panel__meta">
-                        <span class="chip">CH0..CH5</span>
-                        <span class="chip">MG996 + SG90</span>
-                    </div>
+        <section class="layout">
+            <!-- Left: Motors -->
+            <section class="card">
+                <div class="cardHead">
+                    <div class="cardTitle">Motor Control</div>
+                    <div class="cardNote mono">CH0..CH5 • Servo6 clamp: 15–90°</div>
                 </div>
 
-                <div class="motorHead">
-                    <div class="mh mh--arm">ARM</div>
-                    <div class="mh mh--name">MOTOR</div>
-                    <div class="mh mh--deg">DEGREES</div>
-                    <div class="mh mh--val">VAL</div>
+                <div class="tableHead">
+                    <div>ARM</div>
+                    <div>MOTOR</div>
+                    <div>DEGREES</div>
+                    <div class="right">VAL</div>
                 </div>
 
-                <div id="motors" class="motors"></div>
+                <div id="motors" class="rows"></div>
 
-                <div class="panel__foot">
-                    <div class="hint mono">
-                        <span class="muted">Nota:</span> Desarmado bloquea UI y también el firmware debe ignorarlo.
-                        (doble cinturón).
-                    </div>
+                <div class="footerNote mono">
+                    Tip: arma solo lo que estés usando. Desarmado = no manda comandos.
                 </div>
             </section>
 
-            <!-- Console / telemetry -->
-            <section class="panel">
-                <div class="panel__head">
-                    <div class="panel__title">TELEMETRY + CONSOLE</div>
-                    <div class="panel__meta">
-                        <span class="chip chip--pulse" id="simPulse">SIM FEED</span>
-                        <span class="chip">JSON</span>
-                    </div>
+            <!-- Right: System -->
+            <aside class="card">
+                <div class="cardHead">
+                    <div class="cardTitle">System</div>
+                    <div class="cardNote mono">JSON</div>
                 </div>
 
-                <div class="telemetry">
-                    <div class="telemetry__card">
-                        <div class="tlabel">RSSI</div>
-                        <div class="tvalue" id="rssi">—</div>
-                    </div>
-                    <div class="telemetry__card">
-                        <div class="tlabel">CPU</div>
-                        <div class="tvalue" id="cpu">—</div>
-                    </div>
-                    <div class="telemetry__card">
-                        <div class="tlabel">I2C</div>
-                        <div class="tvalue" id="i2c">OK</div>
-                    </div>
-                    <div class="telemetry__card">
-                        <div class="tlabel">SERVO BUS</div>
-                        <div class="tvalue" id="bus">50Hz</div>
-                    </div>
+                <div class="kv">
+                    <div class="k">Enable Mask</div>
+                    <div class="v mono">0b<span id="maskBin">000000</span> <span class="muted">(</span><span
+                            id="maskDec">0</span><span class="muted">)</span></div>
                 </div>
 
-                <div class="console">
-                    <div class="console__head">
-                        <div class="console__title mono">LOG</div>
-                        <div class="console__actions">
-                            <button id="clearLog" class="btn btn--ghost">CLEAR</button>
-                            <button id="toggleSim" class="btn btn--ghost">TOGGLE SIM</button>
-                        </div>
-                    </div>
-                    <div id="log" class="console__body mono"></div>
+                <div class="kv">
+                    <div class="k">Last TX</div>
+                    <div class="v mono ellipsis" id="lastCmd">—</div>
                 </div>
 
-                <div class="panel__foot">
-                    <div class="hint">
-                        Listo para WebSocket: cambia <span class="mono">send()</span> para mandar a tu relay.
+                <div class="kv">
+                    <div class="k">Last RX</div>
+                    <div class="v mono ellipsis" id="lastRx">—</div>
+                </div>
+
+                <div class="logHead">
+                    <div class="mono">LOG</div>
+                    <div class="logActions">
+                        <button id="clearLog" class="btn btn--ghost">CLEAR</button>
                     </div>
                 </div>
-            </section>
+                <div id="log" class="log mono"></div>
+
+                <div class="footerNote mono">
+                    Pendiente: conectar WebSocket (relay) para RX real.
+                </div>
+            </aside>
         </section>
     </main>
 
     <script>
         // =========================
-        //   CORE CONFIG / STATE
+        // CONFIG / STATE
         // =========================
         const motors = [
             { ch: 0, name: "Base (MG996)", min: 0, max: 180, deg: 90, armed: false },
@@ -222,51 +118,28 @@
             return motors.reduce((mask, m) => mask | ((m.armed ? 1 : 0) << m.ch), 0);
         }
 
+        function updateMaskUI() {
+            const mask = enableMask();
+            $("maskBin").textContent = bin6(mask);
+            $("maskDec").textContent = mask;
+        }
+
         function setConn(state) {
+            // state: "OK" | "BAD" | "UNK"
             const dot = $("connDot");
             const txt = $("connText");
-            const badge = $("connBadge");
 
-            badge.classList.remove("ok", "warn", "bad");
             dot.classList.remove("dot--ok", "dot--warn", "dot--bad");
-
             if (state === "OK") {
-                badge.classList.add("ok");
                 dot.classList.add("dot--ok");
                 txt.textContent = "CONNECTED";
             } else if (state === "BAD") {
-                badge.classList.add("bad");
                 dot.classList.add("dot--bad");
                 txt.textContent = "DISCONNECTED";
             } else {
-                badge.classList.add("warn");
                 dot.classList.add("dot--warn");
                 txt.textContent = "UNKNOWN";
             }
-        }
-
-        // =========================
-        //   HUD HELPERS
-        // =========================
-        let msgCount = 0;
-        let lastRateTick = Date.now();
-        function bumpRate() {
-            msgCount++;
-        }
-        setInterval(() => {
-            const now = Date.now();
-            const dt = Math.max(1, (now - lastRateTick) / 1000);
-            $("rate").textContent = Math.round(msgCount / dt);
-            msgCount = 0;
-            lastRateTick = now;
-        }, 1000);
-
-        function logLine(type, obj) {
-            const t = new Date().toLocaleTimeString();
-            const line = document.createElement("div");
-            line.className = "logline " + (type === "TX" ? "tx" : type === "RX" ? "rx" : "sys");
-            line.innerHTML = `<span class="tag">${type}</span><span class="time">${t}</span> ${escapeHtml(JSON.stringify(obj))}`;
-            elLog.prepend(line);
         }
 
         function escapeHtml(str) {
@@ -276,125 +149,81 @@
                 .replaceAll(">", "&gt;");
         }
 
-        function updateMaskUI() {
-            const mask = enableMask();
-            $("maskBin").textContent = bin6(mask);
-            $("maskDec").textContent = mask;
-        }
-
-        function updateUptime(ms) {
-            if (typeof ms !== "number") { $("uptime").textContent = "—"; return; }
-            const s = Math.floor(ms / 1000);
-            const h = Math.floor(s / 3600);
-            const m = Math.floor((s % 3600) / 60);
-            const ss = s % 60;
-            $("uptime").textContent = `${h}h ${m}m ${ss}s`;
+        function logLine(type, obj) {
+            const t = new Date().toLocaleTimeString();
+            const line = document.createElement("div");
+            line.className = "logline " + (type === "TX" ? "tx" : type === "RX" ? "rx" : "sys");
+            line.innerHTML = `<span class="tag">${type}</span><span class="time">${t}</span> ${escapeHtml(JSON.stringify(obj))}`;
+            elLog.prepend(line);
         }
 
         // =========================
-        //   WS READY LAYER (SIM NOW)
+        // TRANSPORT LAYER (stub)
         // =========================
-        // En producción: reemplaza send() para WS.
-        // Ejemplo:
-        // ws.send(JSON.stringify(msg))
-        // y en ws.onmessage => handleRx(JSON.parse(evt.data))
         function send(msg) {
-            // UI side safety: si set_servo y no armado, no manda
+            // UI safety
             if (msg.type === "set_servo") {
                 const m = motors[msg.ch];
                 if (!m?.armed) return;
-            }
-            // UI clamp extra (por si alguien mete valores raros)
-            if (msg.type === "set_servo") {
-                const m = motors[msg.ch];
                 msg.deg = clamp(+msg.deg, m.min, m.max);
             }
             if (msg.type === "set_pose" && Array.isArray(msg.deg)) {
-                msg.deg = msg.deg.map((d, ch) => {
-                    const m = motors[ch];
-                    return clamp(+d, m.min, m.max);
-                });
+                msg.deg = msg.deg.map((d, ch) => clamp(+d, motors[ch].min, motors[ch].max));
             }
 
             $("lastCmd").textContent = JSON.stringify(msg);
-            bumpRate();
             logLine("TX", msg);
 
-            // SIM feed (solo para ver movimiento/telemetría bonita)
-            if (simEnabled) {
-                simulateRxFor(msg);
-            }
+            // TODO: ws.send(JSON.stringify(msg))
         }
 
-        function handleRx(msg) {
-            $("lastRx").textContent = JSON.stringify(msg);
-            bumpRate();
-            logLine("RX", msg);
-
-            if (msg.type === "status") {
-                if (typeof msg.enable_mask === "number") {
-                    // sincronizar armado con máscara
-                    motors.forEach(m => m.armed = ((msg.enable_mask >> m.ch) & 1) === 1);
-                    updateMaskUI();
-                    renderMotors();
-                }
-                if (Array.isArray(msg.deg) && msg.deg.length === 6) {
-                    msg.deg.forEach((d, ch) => {
-                        motors[ch].deg = clamp(+d, motors[ch].min, motors[ch].max);
-                    });
-                    renderMotors();
-                }
-                if (typeof msg.rssi === "number") $("rssi").textContent = msg.rssi + " dBm";
-                if (typeof msg.uptime_ms === "number") updateUptime(msg.uptime_ms);
-            }
-        }
+        // Cuando tengas WS:
+        // function handleRx(msg){
+        //   $("lastRx").textContent = JSON.stringify(msg);
+        //   logLine("RX", msg);
+        //   if(msg.type === "status"){ ...sync... }
+        // }
 
         // =========================
-        //   UI RENDER
+        // RENDER
         // =========================
         function renderMotors() {
             elMotors.innerHTML = "";
 
             motors.forEach((m, idx) => {
                 const row = document.createElement("div");
-                row.className = "motorRow";
-
-                const armedClass = m.armed ? "armed" : "safe";
+                row.className = "row";
 
                 row.innerHTML = `
-        <div class="col col--arm">
-          <label class="toggle ${armedClass}">
+        <div class="cell">
+          <label class="toggle ${m.armed ? "armed" : "safe"}">
             <input type="checkbox" ${m.armed ? "checked" : ""} data-idx="${idx}" class="armToggle" />
-            <span class="toggle__track">
-              <span class="toggle__thumb"></span>
-            </span>
-            <span class="toggle__text">${m.armed ? "ARMED" : "SAFE"}</span>
+            <span class="track"><span class="thumb"></span></span>
+            <span class="ttext mono">${m.armed ? "ARM" : "SAFE"}</span>
           </label>
         </div>
 
-        <div class="col col--name">
+        <div class="cell">
           <div class="mname">${m.name}</div>
-          <div class="mmeta mono">CH${m.ch} • min ${m.min}° • max ${m.max}°</div>
+          <div class="mmeta mono">CH${m.ch} • ${m.min}–${m.max}°</div>
         </div>
 
-        <div class="col col--deg">
-          <div class="sliderWrap ${m.armed ? "" : "disabled"}">
-            <input type="range" min="${m.min}" max="${m.max}" value="${m.deg}" data-idx="${idx}" class="degSlider" />
-            <div class="sliderGlow"></div>
-          </div>
+        <div class="cell">
+          <input type="range" min="${m.min}" max="${m.max}" value="${m.deg}" data-idx="${idx}"
+            class="slider ${m.armed ? "" : "disabled"}" />
         </div>
 
-        <div class="col col--val">
+        <div class="cell right">
           <input type="number" min="${m.min}" max="${m.max}" value="${m.deg}" data-idx="${idx}"
-            class="degInput mono ${m.armed ? "" : "disabled"}" />
-          <button class="btn btn--micro btn--ghost centerBtn" data-idx="${idx}">90°</button>
+            class="num mono ${m.armed ? "" : "disabled"}" />
+          <button class="btn btn--ghost btn--micro centerBtn" data-idx="${idx}">90°</button>
         </div>
       `;
 
                 elMotors.appendChild(row);
             });
 
-            // listeners: ARM
+            // ARM toggles
             document.querySelectorAll(".armToggle").forEach(inp => {
                 inp.onchange = (e) => {
                     const idx = +e.target.dataset.idx;
@@ -405,35 +234,30 @@
                 };
             });
 
-            // slider + input
             const onDegChange = (idx, value) => {
                 const m = motors[idx];
-                const v = clamp(+value, m.min, m.max);
-                m.deg = v;
+                m.deg = clamp(+value, m.min, m.max);
                 renderMotors();
                 if (m.armed) {
-                    send({ type: "set_servo", ch: m.ch, deg: v });
+                    send({ type: "set_servo", ch: m.ch, deg: m.deg });
                 }
             };
 
-            document.querySelectorAll(".degSlider").forEach(inp => {
+            document.querySelectorAll(".slider").forEach(inp => {
                 inp.oninput = (e) => onDegChange(+e.target.dataset.idx, e.target.value);
             });
 
-            document.querySelectorAll(".degInput").forEach(inp => {
+            document.querySelectorAll(".num").forEach(inp => {
                 inp.onchange = (e) => onDegChange(+e.target.dataset.idx, e.target.value);
             });
 
             document.querySelectorAll(".centerBtn").forEach(btn => {
-                btn.onclick = (e) => {
-                    const idx = +e.target.dataset.idx;
-                    onDegChange(idx, 90);
-                };
+                btn.onclick = (e) => onDegChange(+e.target.dataset.idx, 90);
             });
         }
 
         // =========================
-        //   BUTTONS / HOTKEYS
+        // ACTIONS
         // =========================
         $("masterArm").onclick = () => {
             const anyDisarmed = motors.some(m => !m.armed);
@@ -452,70 +276,21 @@
             logLine("SYS", { info: "log cleared" });
         };
 
+        // Hotkeys
         document.addEventListener("keydown", (e) => {
-            if (e.key.toLowerCase() === "q") {
-                $("masterArm").click();
-            }
-            if (e.key === "Escape") {
-                $("estop").click();
-            }
+            if (e.key.toLowerCase() === "q") $("masterArm").click();
+            if (e.key === "Escape") $("estop").click();
         });
 
         // =========================
-        //   SIMULACIÓN (para que se vea vivo)
-        // =========================
-        let simEnabled = true;
-        $("toggleSim").onclick = () => {
-            simEnabled = !simEnabled;
-            $("mode").textContent = simEnabled ? "SIM" : "WS";
-            $("simPulse").style.display = simEnabled ? "inline-flex" : "none";
-            logLine("SYS", { sim: simEnabled });
-            if (simEnabled) {
-                setConn("OK");
-            }
-        };
-
-        function simulateRxFor(tx) {
-            // “telemetría” fake
-            const rssi = -50 - Math.floor(Math.random() * 25);
-            const cpu = 20 + Math.floor(Math.random() * 50);
-            $("cpu").textContent = cpu + "%";
-            $("latency").textContent = 10 + Math.floor(Math.random() * 35);
-
-            let enable_mask = enableMask();
-            let deg = motors.map(m => m.deg);
-
-            // Si llega set_enable_mask, lo reflejamos
-            if (tx.type === "set_enable_mask") {
-                enable_mask = tx.mask;
-            }
-
-            // Si llega estop, no cambiamos valores, solo avisamos
-            if (tx.type === "estop") {
-                handleRx({ type: "status", enable_mask, deg, rssi, uptime_ms: performance.now() | 0 });
-                return;
-            }
-
-            // status normal
-            handleRx({ type: "status", enable_mask, deg, rssi, uptime_ms: performance.now() | 0 });
-        }
-
-        // =========================
-        //   INIT
+        // INIT
         // =========================
         function init() {
-            setConn("OK");               // en WS real, esto depende del socket
-            $("latency").textContent = "—";
-            $("rssi").textContent = "—";
-            $("cpu").textContent = "—";
+            setConn("BAD"); // hasta que WS diga lo contrario
             updateMaskUI();
             renderMotors();
-
             logLine("SYS", { boot: "ok", note: "All motors start SAFE (disarmed)." });
-            // Primer status “ping”
-            send({ type: "get_status" });
         }
-
         init();
     </script>
 </body>
